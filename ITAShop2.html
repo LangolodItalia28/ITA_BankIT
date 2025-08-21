@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<title>ITA_shop 🇮🇹</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent: orange;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Lexend',sans-serif;background:#f0f2f5}
+
+  /* Login */
+  #loginPage{display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;padding:16px}
+  #loginPageContent{text-align:center;color:#000;background:rgba(200,200,200,.85);padding:30px;border-radius:15px;display:flex;flex-direction:column;align-items:center;gap:10px;max-width:420px;width:100%}
+  #loginPageContent input{padding:10px;font-size:16px;border-radius:8px;border:none;width:220px}
+  #loginPageContent button{padding:10px 20px;font-size:16px;border:none;border-radius:8px;cursor:pointer;background:var(--accent);color:#fff}
+  #rememberBtn{width:220px}
+
+  /* App layout */
+  #app{display:none;flex-direction:row;height:100vh}
+  .sidebar{width:220px;background:#222;color:#fff;padding:20px}
+  .sidebar h2{text-align:center;margin-bottom:30px;font-weight:700}
+  .sidebar button{display:block;width:100%;margin:10px 0;padding:12px;background:#444;border:none;border-radius:8px;color:#fff;cursor:pointer;text-align:left}
+  .sidebar button:hover{background:#666}
+  .content{position:relative;flex:1;padding:30px;overflow-y:auto;display:flex;flex-direction:column}
+  .page{display:none}
+
+  /* Card + ATM area */
+  #cardAndATM{position:relative;display:flex;gap:60px;margin-top:20px;min-height:300px}
+  /* Card (a sinistra) */
+  .card{width:400px;height:230px;border-radius:20px;padding:20px;color:#fff;background:linear-gradient(135deg,#0d47a1,#1976d2,#42a5f5);box-shadow:0 8px 20px rgba(0,0,0,.4);font-family:monospace;position:relative}
+  .chip{width:50px;height:40px;background:linear-gradient(135deg,#d4af37,#ffd700);border-radius:6px;position:absolute;top:20px;left:20px}
+  .card-title{position:absolute;top:20px;right:20px;font-size:18px;font-weight:700}
+  .card-number{font-size:22px;letter-spacing:3px;text-align:center;margin-top:90px}
+  .card-footer{position:absolute;bottom:20px;left:15px;right:15px;display:flex;justify-content:space-between;font-size:14px;font-family:monospace}
+  #cardHolder,#cardPin{font-weight:700}
+
+  /* ATM (a destra, 1cm dal bordo) */
+  #atm{position:absolute;right:1cm;top:0;background:#444;width:300px;border-radius:15px;padding:20px;text-align:center;box-shadow:0 5px 15px rgba(0,0,0,.3)}
+  #atm h3{margin:0 0 10px;color:#fff}
+  /* Display più largo e multilinea */
+  #atmDisplay{height:90px;background:#000;color:lime;margin-bottom:15px;border-radius:8px;font-size:16px;line-height:1.2;text-align:center;box-shadow:inset 0 0 5px #0f0;font-weight:700;display:flex;flex-direction:column;justify-content:center;padding:8px;white-space:pre-line}
+  .atmSlot{width:80%;height:15px;background:#222;margin:0 auto 15px;border-radius:5px;box-shadow:0 0 5px #0f0}
+  .atmCashSlot{width:80%;height:25px;background:#333;margin:10px auto;border-radius:5px;box-shadow:inset 0 0 10px #555;position:relative}
+  .atmCashSlot::after{content:'';position:absolute;top:4px;left:4px;width:calc(100% - 8px);height:4px;background:lime;border-radius:2px;animation:blink 1s infinite}
+  @keyframes blink{0%,50%,100%{opacity:1}25%,75%{opacity:.2}}
+  .atmKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+  .atmKeypad button{padding:15px;font-size:18px;border:none;border-radius:8px;background:#555;color:#fff;cursor:pointer}
+  .atmKeypad button:hover{background:#777}
+
+  /* Products & inventory */
+  #shopProducts{display:flex;flex-wrap:wrap;gap:20px;margin-top:20px}
+  .product{display:flex;flex-direction:column;align-items:center;border:2px solid #ccc;border-radius:15px;padding:15px;margin-bottom:20px;width:220px;background:#fff}
+  .product img{width:150px;height:150px;object-fit:cover;border-radius:8px}
+  .product-info h3{margin:8px 0 4px;font-weight:700}
+  .product-info p{margin:0}
+  .product button{margin-top:10px;padding:10px 20px;font-size:16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer}
+
+  /* Overlay message (no alert) */
+  #customMsg{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--accent);color:#fff;padding:22px 28px;border-radius:14px;display:none;text-align:center;font-weight:700;z-index:3000;min-width:260px;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+
+  /* Daily popup */
+  #dailyPopup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#222;color:#fff;padding:30px;border-radius:20px;text-align:center;z-index:2500;box-shadow:0 8px 25px rgba(0,0,0,.6);max-width:360px;width:92%}
+  #dailyPopup button{padding:15px 30px;font-size:18px;border:none;border-radius:10px;background:var(--accent);color:#fff;cursor:pointer;margin-top:15px}
+  #dailyTimer{margin-top:10px;font-size:16px}
+  #closeDailyPopup{position:absolute;top:10px;right:14px;cursor:pointer;font-size:22px;font-weight:700;line-height:1}
+
+  /* Small helper so a page is visible initially */
+  #negozio.page{display:block}
+</style>
+</head>
+<body>
+  <!-- Login -->
+  <div id="loginPage">
+    <div id="loginPageContent">
+      <h1>Benvenuto in ITA_shop 🇮🇹</h1>
+      <input type="text" id="discordName" placeholder="Nome Discord">
+      <button id="rememberBtn">Ricorda il mio nome</button>
+      <button id="enterBtn">Entra</button>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="app">
+    <div class="sidebar">
+      <h2>ITA_shop 🇮🇹</h2>
+      <button onclick="showPage('negozio')">🛒 Negozio</button>
+      <button onclick="showPage('inventario')">🎒 Inventario</button>
+      <button onclick="showPage('bancomat')">💳 ATM</button>
+    </div>
+
+    <div class="content">
+      <!-- Negozio -->
+      <div id="negozio" class="page" style="position: relative;">
+        <h1>Negozio</h1>
+        <div id="shopProducts"></div>
+      </div>
+
+      <!-- Inventario -->
+      <div id="inventario" class="page">
+        <h1>Inventario</h1>
+        <div id="inventoryList">Nessun oggetto</div>
+      </div>
+
+      <!-- ATM -->
+      <div id="bancomat" class="page">
+        <div id="cardAndATM">
+          <!-- Card a sinistra -->
+          <div class="card" id="virtualCard">
+            <div class="chip"></div>
+            <div class="card-title">ITA Card</div>
+            <div class="card-number" id="cardNumber">---- ---- ---- ----</div>
+            <div class="card-footer">
+              <div id="cardHolder">Nome</div>
+              <div id="cardPin">PIN: ----</div>
+            </div>
+          </div>
+
+          <!-- ATM a destra (1cm dal bordo) -->
+          <div id="atm">
+            <h3>ITA_Bank 🇮🇹</h3>
+            <div id="atmDisplay">Inserisci PIN</div>
+            <div class="atmSlot"></div>
+            <div class="atmCashSlot"></div>
+            <div class="atmKeypad" id="atmKeypad">
+              <!-- Generati via JS per sicurezza, ma lascio markup semantico come fallback -->
+              <button data-key="1">1</button>
+              <button data-key="2">2</button>
+              <button data-key="3">3</button>
+              <button data-key="4">4</button>
+              <button data-key="5">5</button>
+              <button data-key="6">6</button>
+              <button data-key="7">7</button>
+              <button data-key="8">8</button>
+              <button data-key="9">9</button>
+              <button data-key="C">C</button>
+              <button data-key="0">0</button>
+              <button data-key="E">E</button>
+            </div>
+          </div>
+        </div>
+      </div> <!-- /ATM -->
+    </div>
+  </div>
+
+  <!-- Overlay message -->
+  <div id="customMsg"></div>
+
+  <!-- Pop-up Daily -->
+  <div id="dailyPopup">
+    <span id="closeDailyPopup">×</span>
+    <div style="font-weight:700;font-size:18px;margin-bottom:8px;">CLICCA QUI!</div>
+    <button id="claimDailyBtn">Ritira 50 ITA_Coin</button>
+    <div id="dailyTimer">Timer: 24:00:00</div>
+  </div>
+
+<script>
+  //////////////////////////
+  // Stato & Utilità
+  //////////////////////////
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => document.querySelectorAll(sel);
+
+  const loginPage = $('#loginPage');
+  const app = $('#app');
+  const enterBtn = $('#enterBtn');
+  const rememberBtn = $('#rememberBtn');
+  const discordNameInput = $('#discordName');
+
+  const cardNumberEl = $('#cardNumber');
+  const cardHolderEl = $('#cardHolder');
+  const cardPinEl = $('#cardPin');
+
+  const atmDisplay = $('#atmDisplay');
+  const keypadEl = $('#atmKeypad');
+
+  const customMsg = $('#customMsg');
+
+  // Daily popup
+  const dailyPopup = $('#dailyPopup');
+  const closeDailyPopupBtn = $('#closeDailyPopup');
+  const claimDailyBtn = $('#claimDailyBtn');
+  const timerDiv = $('#dailyTimer');
+
+  // Player profile in localStorage, key per nome
+  let currentPlayer = null;   // { name, cardNumber, pin, coins, inventory[], nextDailyTime }
+  let currentPINInput = "";
+
+  function lpad(n){ return n.toString().padStart(2,'0'); }
+
+  function formatCard(num16){
+    return num16.replace(/(\d{4})(?=\d)/g, '$1 ');
+  }
+  function gen16Digits(){
+    let s = "";
+    for(let i=0;i<16;i++) s += Math.floor(Math.random()*10);
+    return s;
+  }
+  function genPIN4(){
+    return ('' + Math.floor(1000 + Math.random()*9000));
+  }
+
+  function loadPlayer(name){
+    const raw = localStorage.getItem('player_'+name);
+    if(raw){
+      return JSON.parse(raw);
+    }else{
+      const prof = {
+        name,
+        cardNumber: gen16Digits(),
+        pin: genPIN4(),
+        coins: 150,
+        inventory: [],
+        nextDailyTime: 0
+      };
+      localStorage.setItem('player_'+name, JSON.stringify(prof));
+      return prof;
+    }
+  }
+  function savePlayer(p){
+    localStorage.setItem('player_'+p.name, JSON.stringify(p));
+  }
+
+  function showMsg(text){
+    customMsg.textContent = text;
+    customMsg.style.display = 'block';
+    setTimeout(()=>{ customMsg.style.display='none'; }, 2000);
+  }
+
+  //////////////////////////
+  // Login & Memoria nome
+  //////////////////////////
+  window.addEventListener('load', ()=>{
+    const saved = localStorage.getItem('discordName');
+    if(saved) discordNameInput.value = saved;
+  });
+
+  rememberBtn.addEventListener('click', ()=>{
+    const name = (discordNameInput.value||'').trim();
+    if(!name){ showMsg('Inserisci un nome!'); return; }
+    localStorage.setItem('discordName', name);
+    showMsg('Nome salvato: '+name);
+  });
+
+  enterBtn.addEventListener('click', ()=>{
+    const name = (discordNameInput.value||'').trim();
+    if(!name){ showMsg('Inserisci un nome!'); return; }
+
+    currentPlayer = loadPlayer(name);
+    // Aggiorna card UI
+    cardNumberEl.textContent = formatCard(currentPlayer.cardNumber);
+    cardHolderEl.textContent = currentPlayer.name;
+    cardPinEl.textContent = 'PIN: ' + currentPlayer.pin;
+
+    // Mostra app
+    loginPage.style.display = 'none';
+    app.style.display = 'flex';
+
+    // Mostra popup daily all’accesso
+    showDailyPopup(true);
+  });
+
+  //////////////////////////
+  // Navigazione pagine
+  //////////////////////////
+  function showPage(page){
+    $$('.page').forEach(p=>p.style.display='none');
+    $('#'+page).style.display = 'block';
+  }
+  window.showPage = showPage; // per gli onclick nel markup
+
+  //////////////////////////
+  // ATM: tastierino
+  //////////////////////////
+  function clearPIN(){
+    currentPINInput = "";
+    atmDisplay.textContent = 'Inserisci PIN';
+  }
+  function handleEnter(){
+    if(!currentPlayer) return;
+    if(currentPINInput === currentPlayer.pin){
+      atmDisplay.textContent = `ACCESSO CONFERMATO!\nSALDO: ${currentPlayer.coins} ITA_Coin`;
+    }else{
+      atmDisplay.textContent = 'PIN ERRATO!';
+    }
+    currentPINInput = "";
+  }
+  function pressKey(k){
+    if(k === 'C'){ clearPIN(); return; }
+    if(k === 'E'){ handleEnter(); return; }
+    if(currentPINInput.length < 4){
+      currentPINInput += k;
+      atmDisplay.textContent = 'PIN: ' + currentPINInput;
+    }
+  }
+  // delega click
+  keypadEl.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button[data-key]');
+    if(!btn) return;
+    pressKey(btn.getAttribute('data-key'));
+  });
+  // tastiera fisica (opzionale)
+  document.addEventListener('keydown', (e)=>{
+    if(!$('#bancomat') || $('#bancomat').style.display === 'none') return;
+    const k = e.key;
+    if(/\d/.test(k)) pressKey(k);
+    else if(k === 'Enter') pressKey('E');
+    else if(k.toUpperCase() === 'C' || k === 'Backspace') pressKey('C');
+  });
+
+  //////////////////////////
+  // Shop & inventario
+  //////////////////////////
+  const products = [
+    {name:'Pizza 🍕', price:30, img:'https://via.placeholder.com/150'},
+    {name:'Gelato 🍨', price:20, img:'https://via.placeholder.com/150'},
+    {name:'Pasta 🍝', price:25, img:'https://via.placeholder.com/150'}
+  ];
+  const shopDiv = $('#shopProducts');
+  const invDiv = $('#inventoryList');
+
+  function renderShop(){
+    shopDiv.innerHTML = '';
+    products.forEach(p=>{
+      const box = document.createElement('div');
+      box.className = 'product';
+      box.innerHTML = `
+        <img src="${p.img}" alt="">
+        <div class="product-info">
+          <h3>${p.name}</h3>
+          <p>Prezzo: ${p.price} ITA_Coin</p>
+        </div>
+        <button>Acquista</button>
+      `;
+      box.querySelector('button').addEventListener('click', ()=>{
+        buyProduct(p.name, p.price);
+      });
+      shopDiv.appendChild(box);
+    });
+  }
+  function renderInventory(){
+    if(!currentPlayer || !currentPlayer.inventory.length){
+      invDiv.textContent = 'Nessun oggetto';
+      return;
+    }
+    invDiv.innerHTML = '';
+    const ul = document.createElement('ul');
+    currentPlayer.inventory.forEach(item=>{
+      const li = document.createElement('li');
+      li.textContent = item;
+      ul.appendChild(li);
+    });
+    invDiv.appendChild(ul);
+  }
+  function buyProduct(name, price){
+    if(!currentPlayer){ showMsg('Effettua il login prima.'); return; }
+    if(currentPlayer.coins >= price){
+      currentPlayer.coins -= price;
+      currentPlayer.inventory.push(name);
+      savePlayer(currentPlayer);
+      renderInventory();
+      showMsg(`Hai acquistato: ${name}`);
+      // se l’ATM è aperto e il PIN è corretto verrà mostrato saldo al prossimo enter;
+      // non forziamo la schermata, ma aggiorniamo eventuale display informativo:
+      if(atmDisplay.textContent.startsWith('ACCESSO CONFERMATO'))
+        atmDisplay.textContent = `ACCESSO CONFERMATO!\nSALDO: ${currentPlayer.coins} ITA_Coin`;
+    }else{
+      showMsg(`Saldo insufficiente per: ${name}`);
+    }
+  }
+
+  renderShop();
+
+  //////////////////////////
+  // Daily popup con X + Timer
+  //////////////////////////
+  function showDailyPopup(onLogin=false){
+    if(!currentPlayer) return;
+    updateDailyTimer(); // calcola subito
+    // se disponibile al claim, mostra; se login, mostra comunque (per vedere timer o claim)
+    dailyPopup.style.display = 'block';
+  }
+  function hideDailyPopup(){ dailyPopup.style.display='none'; }
+
+  closeDailyPopupBtn.addEventListener('click', hideDailyPopup);
+
+  claimDailyBtn.addEventListener('click', ()=>{
+    if(!currentPlayer) return;
+    const now = Date.now();
+    if(now >= (currentPlayer.nextDailyTime||0)){
+      currentPlayer.coins += 50;
+      currentPlayer.nextDailyTime = now + 24*60*60*1000; // 24 ore
+      savePlayer(currentPlayer);
+      showMsg('Hai riscattato 50 ITA_Coin!');
+      hideDailyPopup();
+      // aggiorna display ATM se era già autenticato
+      if(atmDisplay.textContent.startsWith('ACCESSO CONFERMATO'))
+        atmDisplay.textContent = `ACCESSO CONFERMATO!\nSALDO: ${currentPlayer.coins} ITA_Coin`;
+    }
+  });
+
+  function updateDailyTimer(){
+    if(!currentPlayer) return;
+    const now = Date.now();
+    const next = currentPlayer.nextDailyTime || 0;
+    const remaining = next - now;
+
+    if(remaining <= 0){
+      timerDiv.textContent = 'Puoi riscattare il daily!';
+      claimDailyBtn.disabled = false;
+    }else{
+      claimDailyBtn.disabled = true;
+      const h = Math.floor(remaining / 3600000);
+      const m = Math.floor((remaining % 3600000)/60000);
+      const s = Math.floor((remaining % 60000)/1000);
+      timerDiv.textContent = `Timer: ${lpad(h)}:${lpad(m)}:${lpad(s)}`;
+    }
+  }
+  setInterval(()=>{
+    if(currentPlayer){
+      updateDailyTimer();
+      // quando arriva a 0, se il popup è chiuso lo possiamo far riapparire (facoltativo)
+      // qui NON lo riapro automaticamente per non dare fastidio.
+    }
+  }, 1000);
+
+  //////////////////////////
+  // Avvio inventario vuoto
+  //////////////////////////
+  renderInventory();
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
